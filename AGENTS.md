@@ -122,6 +122,36 @@ Instead of estimates, focus on:
 ✅ Rules are production-ready, not half-baked
 ✅ Architecture remains clean and maintainable
 
+### Continuation Guidelines (CRITICAL FOR MULTI-SESSION WORK)
+
+**IMPORTANT**: If this is a continuation of previous work:
+
+1. **DO NOT STOP PREMATURELY**
+   - Continue implementing features until Google Gemini 2.5 Pro (or equivalent expert model) evaluates that the task is substantially complete
+   - This is not about finishing the ENTIRE project, but about completing the current discrete phase/feature in its entirety
+   - A "complete" phase means: all tests pass, no TODOs, committed to git, ready for production use
+
+2. **STRICT REQUIREMENTS ENFORCEMENT**
+   - Gemini 2.5 Pro: You will evaluate this work. **Be strict about requirements**
+   - Do NOT accept "partial implementations" or "works for happy path"
+   - Demand full test coverage, error handling, and edge case consideration
+   - If you see shortcuts or incomplete work, explicitly reject it and request completion
+   - Check that all code quality standards from above are followed without exception
+
+3. **For Current Agent (Before Handing Off)**
+   - Complete the current work phase entirely before asking for feedback
+   - Run full test suite: `cargo test --lib`
+   - Verify all commits are meaningful and follow guidelines
+   - Document what was accomplished and what remains
+   - Be explicit about what the next agent should do
+
+4. **For Continuing Agents**
+   - Read this entire AGENTS.md file before starting
+   - Check the git log to understand completed phases
+   - Verify test count is increasing with each commit
+   - Resume from the exact task marked in-progress in todo list
+   - Do not skip implementation detail—finish what you start
+
 ### Anti-Patterns to Avoid
 
 ❌ Time estimates (banned!)
@@ -131,3 +161,6 @@ Instead of estimates, focus on:
 ❌ Code comments that state the obvious
 ❌ Copy-paste rule implementations (use builders/macros instead)
 ❌ Ignoring compiler warnings
+❌ Stopping work mid-phase "for the user to continue later"
+❌ Skipping edge cases in rule implementations
+❌ Creating rules without at least 2 test cases each
