@@ -1,6 +1,6 @@
 use clap::Parser;
 use fasterthefuck::{
-    Command, Corrector, RuleRegistry,
+    Command, Config, Corrector, RuleRegistry,
     rules::{
         git, filesystem, permissions, package_managers,
     },
@@ -27,27 +27,48 @@ struct Args {
     /// Skip interactive selection and just print first correction
     #[arg(long)]
     no_interaction: bool,
+
+    /// Path to config file (defaults to ~/.config/fasterthefuck/config.toml)
+    #[arg(long)]
+    config: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
+    // Load configuration
+    let config = if let Some(config_path) = &args.config {
+        Config::load_from_file(std::path::Path::new(config_path))?
+    } else {
+        Config::load_default().unwrap_or_default()
+    };
+
     // Create rule registry and populate with all available rules
     let mut registry = RuleRegistry::new();
 
     // Add all git rules
-    registry.add_rules(git::git_branch_rules());
-    registry.add_rules(git::git_push_pull_rules());
-    registry.add_rules(git::git_staging_rules());
+    let mut git_rules = git::git_branch_rules();
+    git_rules.extend(git::git_push_pull_rules());
+    git_rules.extend(git::git_staging_rules());
+    registry.add_rules(filter_rules_by_config(git_rules, &config));
 
     // Add all filesystem rules
-    registry.add_rules(filesystem::filesystem_rules());
+    registry.add_rules(filter_rules_by_config(
+        filesystem::filesystem_rules(),
+        &config,
+    ));
 
     // Add all permission rules
-    registry.add_rules(permissions::permission_rules());
+    registry.add_rules(filter_rules_by_config(
+        permissions::permission_rules(),
+        &config,
+    ));
 
     // Add all package manager rules
-    registry.add_rules(package_managers::package_manager_rules());
+    registry.add_rules(filter_rules_by_config(
+        package_managers::package_manager_rules(),
+        &config,
+    ));
 
     // Create corrector and evaluate
     let corrector: Corrector = registry.into();
@@ -109,4 +130,16 @@ fn select_correction_interactive(corrections: &[fasterthefuck::CorrectedCommand]
     }
 
     None
+}
+
+/// Filters rules based on configuration.
+/// Removes rules that are disabled in the config.
+fn filter_rules_by_config(
+    rules: Vec<Box<dyn fasterthefuck::Rule>>,
+    config: &Config,
+) -> Vec<Box<dyn fasterthefuck::Rule>> {
+    rules
+        .into_iter()
+        .filter(|rule| config.is_rule_enabled(rule.name()))
+        .collect()
 }
