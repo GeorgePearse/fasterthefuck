@@ -1,0 +1,40 @@
+[package]
+name = "fasterthefuck"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# CLI parsing
+clap = { version = "4.4", features = ["derive"] }
+
+# Configuration
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+
+# Parallel processing
+rayon = "1.7"
+
+# Fuzzy matching
+fuzzy-matcher = "0.3"
+skim = { version = "0.10", optional = true }
+
+# Regular expressions
+regex = "1.10"
+
+# Shell integration
+nix = { version = "0.27", features = ["process"] }
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# Path utilities
+dirs = "5.0"
+
+[features]
+default = ["interactive"]
+interactive = ["skim"]

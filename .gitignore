@@ -61,3 +61,8 @@ target/
 
 # vim temporary files
 .*.swp
+
+
+# Added by cargo
+
+/target
