@@ -7,7 +7,9 @@
 /// - Rebasing and merging
 /// - Typos and similar errors
 
-use crate::{Command, Rule, SimpleRuleBuilder, RegexRuleBuilder};
+use crate::{Rule, SimpleRuleBuilder, RegexRuleBuilder};
+#[cfg(test)]
+use crate::Command;
 
 /// Creates all git branch operation rules.
 /// These are simple git branch-related corrections.

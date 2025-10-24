@@ -6,7 +6,9 @@
 /// - Directory permissions
 /// - Ownership changes
 
-use crate::{Command, Rule, SimpleRuleBuilder};
+use crate::{Rule, SimpleRuleBuilder};
+#[cfg(test)]
+use crate::Command;
 
 /// Creates all permission-related rules.
 pub fn permission_rules() -> Vec<Box<dyn Rule>> {

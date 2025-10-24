@@ -12,7 +12,9 @@ pub mod package_managers;
 
 pub use builders::{SimpleRuleBuilder, RegexRuleBuilder, FuzzyRuleBuilder};
 
-use crate::{Command, Corrector, Rule};
+use crate::{Corrector, Rule};
+#[cfg(test)]
+use crate::Command;
 
 /// Registry that manages all available rules.
 pub struct RuleRegistry {

@@ -6,7 +6,9 @@
 /// - Recursive operations
 /// - Directory creation
 
-use crate::{Command, Rule, SimpleRuleBuilder};
+use crate::{Rule, SimpleRuleBuilder};
+#[cfg(test)]
+use crate::Command;
 
 /// Creates all filesystem operation rules.
 pub fn filesystem_rules() -> Vec<Box<dyn Rule>> {

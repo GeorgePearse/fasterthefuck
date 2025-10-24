@@ -6,7 +6,9 @@
 /// - Permission issues
 /// - Configuration problems
 
-use crate::{Command, Rule, SimpleRuleBuilder};
+use crate::{Rule, SimpleRuleBuilder};
+#[cfg(test)]
+use crate::Command;
 
 /// Creates all package manager rules.
 pub fn package_manager_rules() -> Vec<Box<dyn Rule>> {
