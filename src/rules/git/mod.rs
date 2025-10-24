@@ -22,6 +22,28 @@ pub fn git_branch_rules() -> Vec<Box<dyn Rule>> {
     ]
 }
 
+/// Creates all git push/pull operation rules.
+pub fn git_push_pull_rules() -> Vec<Box<dyn Rule>> {
+    vec![
+        // git_push_set_upstream: Set upstream on first push
+        create_git_push_set_upstream(),
+        // git_pull_rebase: Use rebase for pull
+        create_git_pull_rebase(),
+        // git_push_force: Handle force push scenarios
+        create_git_push_force(),
+    ]
+}
+
+/// Creates all git staging and commit rules.
+pub fn git_staging_rules() -> Vec<Box<dyn Rule>> {
+    vec![
+        // git_add_all: Add all files when trying to commit
+        create_git_add_all(),
+        // git_commit_amend: Amend last commit
+        create_git_commit_amend(),
+    ]
+}
+
 /// git_branch_delete: Try force delete when branch has unmerged commits
 fn create_git_branch_delete() -> Box<dyn Rule> {
     SimpleRuleBuilder::new("git_branch_delete")
@@ -56,6 +78,51 @@ fn create_git_branch_0flag() -> Box<dyn Rule> {
         .match_output("fatal: bad revision")
         .priority(400)
         .replace("git branch", "git branch -a")
+}
+
+/// git_push_set_upstream: Set upstream on first push
+fn create_git_push_set_upstream() -> Box<dyn Rule> {
+    SimpleRuleBuilder::new("git_push_set_upstream")
+        .match_command("git push")
+        .match_output("fatal: The current branch")
+        .priority(600)
+        .replace("git push", "git push -u origin")
+}
+
+/// git_pull_rebase: Use rebase when pulling
+fn create_git_pull_rebase() -> Box<dyn Rule> {
+    SimpleRuleBuilder::new("git_pull_rebase")
+        .match_command("git pull")
+        .match_output("Please specify which branch you want to merge with")
+        .priority(500)
+        .replace("git pull", "git pull --rebase origin")
+}
+
+/// git_push_force: Handle rejected pushes with force flag
+fn create_git_push_force() -> Box<dyn Rule> {
+    SimpleRuleBuilder::new("git_push_force")
+        .match_command("git push")
+        .match_output("rejected")
+        .priority(700)
+        .replace("git push", "git push --force-with-lease")
+}
+
+/// git_add_all: Add all files before commit
+fn create_git_add_all() -> Box<dyn Rule> {
+    SimpleRuleBuilder::new("git_add_all")
+        .match_command("git commit")
+        .match_output("fatal: your current branch is behind")
+        .priority(800)
+        .replace("git commit", "git add -A && git commit")
+}
+
+/// git_commit_amend: Amend last commit
+fn create_git_commit_amend() -> Box<dyn Rule> {
+    SimpleRuleBuilder::new("git_commit_amend")
+        .match_command("git commit")
+        .match_output("nothing to commit")
+        .priority(550)
+        .replace("git commit", "git commit --amend --no-edit")
 }
 
 #[cfg(test)]
@@ -124,5 +191,90 @@ mod tests {
         let corrections = rule.get_new_commands(&cmd);
         assert!(!corrections.is_empty());
         assert!(corrections[0].contains("-a"));
+    }
+
+    #[test]
+    fn test_git_push_set_upstream_rule() {
+        let rule = create_git_push_set_upstream();
+        assert_eq!(rule.name(), "git_push_set_upstream");
+
+        let cmd = Command {
+            script: "git push".to_string(),
+            output: "fatal: The current branch main has no upstream branch.".to_string(),
+            exit_code: 1,
+        };
+
+        assert!(rule.matches(&cmd));
+        let corrections = rule.get_new_commands(&cmd);
+        assert!(!corrections.is_empty());
+        assert!(corrections[0].contains("-u origin"));
+    }
+
+    #[test]
+    fn test_git_pull_rebase_rule() {
+        let rule = create_git_pull_rebase();
+        assert_eq!(rule.name(), "git_pull_rebase");
+
+        let cmd = Command {
+            script: "git pull".to_string(),
+            output: "Please specify which branch you want to merge with".to_string(),
+            exit_code: 1,
+        };
+
+        assert!(rule.matches(&cmd));
+        let corrections = rule.get_new_commands(&cmd);
+        assert!(!corrections.is_empty());
+        assert!(corrections[0].contains("--rebase"));
+    }
+
+    #[test]
+    fn test_git_push_force_rule() {
+        let rule = create_git_push_force();
+        assert_eq!(rule.name(), "git_push_force");
+
+        let cmd = Command {
+            script: "git push".to_string(),
+            output: "error: failed to push some refs to origin\n[rejected]        main -> main (non-fast-forward)".to_string(),
+            exit_code: 1,
+        };
+
+        assert!(rule.matches(&cmd));
+        let corrections = rule.get_new_commands(&cmd);
+        assert!(!corrections.is_empty());
+        assert!(corrections[0].contains("--force-with-lease"));
+    }
+
+    #[test]
+    fn test_git_add_all_rule() {
+        let rule = create_git_add_all();
+        assert_eq!(rule.name(), "git_add_all");
+
+        let cmd = Command {
+            script: "git commit -m 'test'".to_string(),
+            output: "fatal: your current branch is behind 'origin/main' by 1 commit".to_string(),
+            exit_code: 1,
+        };
+
+        assert!(rule.matches(&cmd));
+        let corrections = rule.get_new_commands(&cmd);
+        assert!(!corrections.is_empty());
+        assert!(corrections[0].contains("git add -A"));
+    }
+
+    #[test]
+    fn test_git_commit_amend_rule() {
+        let rule = create_git_commit_amend();
+        assert_eq!(rule.name(), "git_commit_amend");
+
+        let cmd = Command {
+            script: "git commit --allow-empty".to_string(),
+            output: "On branch main\nnothing to commit, working tree clean".to_string(),
+            exit_code: 1,
+        };
+
+        assert!(rule.matches(&cmd));
+        let corrections = rule.get_new_commands(&cmd);
+        assert!(!corrections.is_empty());
+        assert!(corrections[0].contains("--amend"));
     }
 }
