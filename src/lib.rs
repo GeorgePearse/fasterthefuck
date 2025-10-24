@@ -11,5 +11,5 @@ pub use error::{Error, Result};
 pub use types::{Command, CorrectedCommand, Rule};
 pub use corrector::Corrector;
 pub use fuzzy::FuzzyMatcher;
-pub use rules::RuleRegistry;
+pub use rules::{RuleRegistry, SimpleRuleBuilder, RegexRuleBuilder};
 pub use shell::{Shell, BashShell, ShellOutput};

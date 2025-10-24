@@ -10,7 +10,7 @@ pub mod permissions;
 pub mod filesystem;
 pub mod package_managers;
 
-pub use builders::SimpleRuleBuilder;
+pub use builders::{SimpleRuleBuilder, RegexRuleBuilder};
 
 use crate::{Command, Corrector, Rule};
 
