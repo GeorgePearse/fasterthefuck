@@ -3,61 +3,28 @@
 use crate::{Command, CorrectedCommand, Rule};
 use rayon::prelude::*;
 
-/// Registry that holds all available rules.
-pub struct RuleRegistry {
-    rules: Vec<Box<dyn Rule>>,
-}
-
-impl RuleRegistry {
-    /// Creates a new empty rule registry.
-    pub fn new() -> Self {
-        Self { rules: Vec::new() }
-    }
-
-    /// Adds a rule to the registry.
-    pub fn add_rule(&mut self, rule: Box<dyn Rule>) {
-        self.rules.push(rule);
-    }
-
-    /// Gets the number of registered rules.
-    pub fn len(&self) -> usize {
-        self.rules.len()
-    }
-
-    /// Returns true if the registry is empty.
-    pub fn is_empty(&self) -> bool {
-        self.rules.is_empty()
-    }
-
-    /// Gets all enabled rules.
-    pub fn enabled_rules(&self) -> Vec<&Box<dyn Rule>> {
-        self.rules
-            .iter()
-            .filter(|rule| rule.enabled_by_default())
-            .collect()
-    }
-}
-
-impl Default for RuleRegistry {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// Re-export RuleRegistry from rules module for convenience
+pub use crate::rules::RuleRegistry;
 
 /// The command correction engine.
 pub struct Corrector {
-    registry: RuleRegistry,
+    rules: Vec<Box<dyn Rule>>,
 }
 
 impl Corrector {
-    /// Creates a new corrector with an empty rule registry.
+    /// Creates a new corrector with a rule registry.
     pub fn new(registry: RuleRegistry) -> Self {
-        Self { registry }
+        Self {
+            rules: registry.rules.into(),
+        }
     }
 
     /// Gets all enabled rules.
     pub fn rules(&self) -> Vec<&Box<dyn Rule>> {
-        self.registry.enabled_rules()
+        self.rules
+            .iter()
+            .filter(|rule| rule.enabled_by_default())
+            .collect()
     }
 
     /// Finds and returns all corrections for a command, sorted by priority.
@@ -66,7 +33,6 @@ impl Corrector {
     pub fn get_corrections(&self, command: &Command) -> Vec<CorrectedCommand> {
         // Parallel rule matching and correction
         let mut corrections: Vec<CorrectedCommand> = self
-            .registry
             .rules
             .par_iter()
             .filter(|rule| {

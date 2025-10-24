@@ -4,8 +4,10 @@ pub mod error;
 pub mod types;
 pub mod corrector;
 pub mod fuzzy;
+pub mod rules;
 
 pub use error::{Error, Result};
 pub use types::{Command, CorrectedCommand, Rule};
 pub use corrector::Corrector;
 pub use fuzzy::FuzzyMatcher;
+pub use rules::RuleRegistry;
